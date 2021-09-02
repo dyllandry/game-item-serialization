@@ -4,6 +4,7 @@
 #include <string.h>
 
 # define INITIAL_BUFFER_SIZE 16
+# define GAME_ITEM_FILE_BUFFER_SIZE 64
 
 struct GameItem {
 	int32_t price;
@@ -18,6 +19,8 @@ struct Buffer {
 };
 
 void printGameItem(struct GameItem gameItem);
+struct GameItem * getGameItemFromFile(char * path);
+void saveGameItemToFile(struct GameItem gameItem, char * filePath);
 struct Buffer * makeBuffer();
 void freeBuffer(struct Buffer * buffer);
 void reserveBufferSpace(struct Buffer * buffer, size_t bytes);
@@ -33,28 +36,23 @@ void freeGameItem(struct GameItem * item);
 
 int main()
 {
-	printf("serializing game item:\n\n");
-	struct GameItem blueberries;
-	blueberries.name = "blueberries";
-	blueberries.price = 15;
-	blueberries.weight = 0.5f;
 
-	printGameItem(blueberries);
+	// Game Item serialization
+	struct GameItem potion;
+	potion.name = "potion";
+	potion.price = 100;
+	potion.weight = 2.0f;
+	saveGameItemToFile(potion, "potion");
+	printf("Game Item serialized and saved to file \"potion\":\n");
+	printGameItem(potion);
+	printf("\n");
 
-	struct Buffer * buffer = makeBuffer();
-	serializeGameItem(blueberries, buffer);
+	// Game Item unserialization
+	struct GameItem * unserializedPotion = getGameItemFromFile("potion");
+	printf("Game Item unserialized from file \"potion\":\n");
+	printGameItem(*unserializedPotion);
+	freeGameItem(unserializedPotion);	
 
-	printf("\nunserializing game item...\n");
-
-	struct GameItem * unserializedBlueberries = malloc(sizeof(struct GameItem));
-	unserializeGameItem(unserializedBlueberries, buffer);
-
-	printGameItem(*unserializedBlueberries);
-
-	freeBuffer(buffer);
-	// TODO: write to file
-
-	freeGameItem(unserializedBlueberries);
 	return 0;
 }
 
@@ -169,4 +167,45 @@ void freeGameItem(struct GameItem * item)
 {
 	free(item->name);
 	free(item);
+}
+
+struct GameItem * getGameItemFromFile(char * path)
+{
+	// Make buffer to read file into.
+	struct Buffer * fileBuffer = makeBuffer();
+	reserveBufferSpace(fileBuffer, GAME_ITEM_FILE_BUFFER_SIZE);
+
+	// Read bytes from file into fileBuffer.
+	FILE * file;
+	if ((file = fopen("output", "r")) == NULL)
+	{
+		printf("could not open file\n");
+		exit(1);
+	}
+	fread(fileBuffer->data, fileBuffer->size, 1, file);
+	fclose(file);
+
+	// Construct gameItem from file buffer.
+	struct GameItem * gameItem = malloc(sizeof(struct GameItem));
+	unserializeGameItem(gameItem, fileBuffer);
+	freeBuffer(fileBuffer);
+
+	return gameItem;
+}
+
+void saveGameItemToFile(struct GameItem gameItem, char * filePath)
+{
+	struct Buffer * buffer = makeBuffer();
+	serializeGameItem(gameItem, buffer);
+
+	FILE * file;
+ 	if ((file = fopen(filePath, "wb")) == NULL)
+	{
+		printf("error opening file\n");
+		exit(1);
+	}
+
+	fwrite(buffer->data, buffer->size, 1, file);
+
+	fclose (file);
 }
