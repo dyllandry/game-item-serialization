@@ -177,7 +177,7 @@ struct GameItem * getGameItemFromFile(char * path)
 
 	// Read bytes from file into fileBuffer.
 	FILE * file;
-	if ((file = fopen("output", "r")) == NULL)
+	if ((file = fopen(path, "r")) == NULL)
 	{
 		printf("could not open file\n");
 		exit(1);
