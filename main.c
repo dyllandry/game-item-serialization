@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <errno.h>
+#include <string.h>
 
 # define INITIAL_BUFFER_SIZE 16
 # define GAME_ITEM_FILE_BUFFER_SIZE 64
@@ -180,6 +182,8 @@ struct GameItem * getGameItemFromFile(char * path)
 	if ((file = fopen(path, "r")) == NULL)
 	{
 		printf("could not open file\n");
+		char *str_error = strerror(errno);
+		printf("error: %s\n", str_error);
 		exit(1);
 	}
 	fread(fileBuffer->data, fileBuffer->size, 1, file);
@@ -202,6 +206,8 @@ void saveGameItemToFile(struct GameItem gameItem, char * filePath)
  	if ((file = fopen(filePath, "wb")) == NULL)
 	{
 		printf("error opening file\n");
+		char *str_error = strerror(errno);
+		printf("error: %s\n", str_error);
 		exit(1);
 	}
 
